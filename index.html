@@ -125,10 +125,10 @@
             gap: 8px;
             padding: 4px 0;
         }
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+        .legend-line {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
         }
         
         .leaflet-container { background: #0d1117; }
@@ -139,18 +139,12 @@
         }
         .leaflet-popup-tip { background: #161b22; }
         .leaflet-popup-content { margin: 12px 16px; }
-        
-        .custom-popup .leaflet-popup-content-wrapper {
-            background: #161b22;
-            color: #e6edf3;
-            border-radius: 12px;
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🗺️ 云南6天5晚自驾游</h1>
-        <div class="subtitle">点击标记查看详细行程 | 拖拽缩放</div>
+        <div class="subtitle">真实公路路线 · 点击标记查看详情</div>
     </div>
     
     <div id="map"></div>
@@ -175,11 +169,11 @@
     </div>
     
     <div class="day-legend">
-        <h4>📍 途经地点</h4>
-        <div class="legend-item"><span class="legend-dot" style="background:#3fb950"></span> 昆明（出发/返回）</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f39c12"></span> 大理双廊</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#9b59b6"></span> 丽江古城</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#3498db"></span> 玉龙雪山</div>
+        <h4>🛣️ 公路路线</h4>
+        <div class="legend-item"><span class="legend-line" style="background:#3fb950"></span> 昆明→大理（G56杭瑞高速）</div>
+        <div class="legend-item"><span class="legend-line" style="background:#f39c12"></span> 大理→丽江（G5611大丽高速）</div>
+        <div class="legend-item"><span class="legend-line" style="background:#e74c3c"></span> 丽江→昆明（G56+G85）</div>
+        <div class="legend-item"><span class="legend-line" style="background:#9b59b6"></span> 环洱海公路</div>
     </div>
     
     <div class="info-box" id="infoBox">
@@ -190,223 +184,176 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 初始化地图
         var map = L.map('map').setView([26.0, 100.5], 7);
         
-        // 深色地图
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap &copy; CARTO',
             maxZoom: 19
         }).addTo(map);
         
-        // 地点数据
+        // 真实高速公路路线坐标
+        var routes = {
+            // 昆明→大理（G56杭瑞高速）
+            kunmingDali: [
+                [25.04, 102.71],  // 昆明
+                [24.88, 102.83],  // 安宁
+                [24.57, 102.50],  // 读书铺
+                [24.26, 102.26],  // 楚雄
+                [24.88, 101.42],  // 南华
+                [25.04, 100.92],  // 祥云
+                [25.59, 100.27],  // 大理
+                [25.93, 100.25]   // 双廊
+            ],
+            // 大理→丽江（G5611大丽高速）
+            daliLijiang: [
+                [25.93, 100.25],  // 双廊
+                [25.59, 100.27],  // 大理
+                [25.53, 100.15],  // 挖色
+                [25.82, 99.92],   // 剑川
+                [26.22, 99.85],   // 九河
+                [26.87, 100.23]   // 丽江
+            ],
+            // 丽江→昆明（返程：G56+G85）
+            lijiangKunming: [
+                [26.87, 100.23],  // 丽江
+                [26.54, 100.25],  // 鹤庆
+                [25.98, 100.10],  // 宾川
+                [25.59, 100.27],  // 大理
+                [25.04, 100.92],  // 祥云
+                [24.88, 101.42],  // 南华
+                [24.26, 102.26],  // 楚雄
+                [24.57, 102.50],  // 读书铺
+                [24.88, 102.83],  // 安宁
+                [25.04, 102.71]   // 昆明
+            ],
+            // 环洱海公路
+            erhai: [
+                [25.93, 100.25],  // 双廊
+                [25.97, 100.10],  // 挖色
+                [25.53, 100.15],  // 大理
+                [26.01, 100.18],  // 喜洲
+                [26.08, 100.22],  // 古城东
+                [25.93, 100.25]   // 双廊
+            ]
+        };
+        
+        // 绘制路线
+        L.polyline(routes.kunmingDali, {color: '#3fb950', weight: 3}).addTo(map);
+        L.polyline(routes.daliLijiang, {color: '#f39c12', weight: 3}).addTo(map);
+        L.polyline(routes.lijiangKunming, {color: '#e74c3c', weight: 3, dashArray: '8, 8'}).addTo(map);
+        L.polyline(routes.erhai, {color: '#9b59b6', weight: 2, dashArray: '5, 5'}).addTo(map);
+        
+        // 地点标记
         var locations = [
             {
                 name: "昆明长水机场",
-                lat: 25.04,
-                lng: 102.71,
-                day: 1,
-                icon: "🛫",
-                color: "#3fb950",
-                info: {
-                    "日期": "4月4日 Day1",
-                    "活动": "抵达昆明，取车出发",
-                    "车程": "340km / 4h",
-                    "餐饮": "云味楼过桥米线 ¥30",
-                    "住宿": "大理双廊湖山云隐民宿"
-                }
+                lat: 25.04, lng: 102.71,
+                day: 1, icon: "🛫", color: "#3fb950",
+                info: {"日期": "4月4日 Day1", "活动": "抵达昆明，取车", "餐饮": "云味楼过桥米线", "住宿": "大理双廊"}
+            },
+            {
+                name: "楚雄服务区",
+                lat: 24.26, lng: 102.26,
+                day: 1, icon: "🚗", color: "#3fb950",
+                info: {"日期": "Day1", "活动": "昆明→大理途中", "休息": "加油、午餐"}
+            },
+            {
+                name: "大理古城",
+                lat: 25.59, lng: 100.27,
+                day: "1-2", icon: "🏯", color: "#f39c12",
+                info: {"日期": "4月4-5日", "活动": "古城夜市、复兴路", "美食": "巍山饵丝"}
             },
             {
                 name: "大理双廊",
-                lat: 25.93,
-                lng: 100.25,
-                day: "1-2",
-                icon: "🌊",
-                color: "#f39c12",
-                info: {
-                    "日期": "4月4-5日 Day1-2",
-                    "活动": "洱海日落、苍山索道、喜洲古镇",
-                    "车程": "环海120km",
-                    "餐饮": "巍山饵丝、吉祥红酸辣鱼",
-                    "住宿": "大理双廊湖山云隐民宿 ¥300/晚",
-                    "亮点": "苍山感通索道、海舌公园、双廊日落"
-                }
+                lat: 25.93, lng: 100.25,
+                day: "1-2", icon: "🌊", color: "#f39c12",
+                info: {"日期": "4月4-5日", "住宿": "湖山云隐民宿", "日落": "鹿卧山观景台"}
             },
             {
                 name: "苍山",
-                lat: 25.97,
-                lng: 100.10,
-                day: 2,
-                icon: "🏔️",
-                color: "#f39c12",
-                info: {
-                    "日期": "4月5日 Day2",
-                    "活动": "苍山感通索道",
-                    "门票": "¥110 + 索道¥50",
-                    "时长": "约3小时",
-                    "建议": "早起出发，避开人流"
-                }
+                lat: 25.97, lng: 100.10,
+                day: 2, icon: "🏔️", color: "#f39c12",
+                info: {"日期": "4月5日 Day2", "活动": "感通索道", "门票": "¥110+¥50"}
             },
             {
                 name: "喜洲古镇",
-                lat: 26.01,
-                lng: 100.18,
-                day: 2,
-                icon: "🏘️",
-                color: "#f39c12",
-                info: {
-                    "日期": "4月5日 Day2",
-                    "活动": "严家大院、海舌公园",
-                    "门票": "严家大院 ¥25",
-                    "美食": "喜洲破酥粑粑",
-                    "拍照": "夫妻树、稻田咖啡"
-                }
+                lat: 26.01, lng: 100.18,
+                day: 2, icon: "🏘️", color: "#f39c12",
+                info: {"日期": "4月5日 Day2", "打卡": "严家大院、海舌公园", "美食": "喜洲破酥粑粑"}
             },
             {
-                name: "挖色小普陀",
-                lat: 26.08,
-                lng: 100.22,
-                day: 2,
-                icon: "📸",
-                color: "#f39c12",
-                info: {
-                    "日期": "4月5日 Day2",
-                    "活动": "洱海东岸自驾",
-                    "打卡": "小普陀岛",
-                    "风景": "洱海海鸥、悬崖日落"
-                }
+                name: "挖色服务区",
+                lat: 25.53, lng: 100.15,
+                day: 2, icon: "📸", color: "#f39c12",
+                info: {"日期": "Day2", "活动": "环洱海中途休息", "风景": "洱海东岸"}
             },
             {
                 name: "丽江古城",
-                lat: 26.87,
-                lng: 100.23,
-                day: "3-5",
-                icon: "🏯",
-                color: "#9b59b6",
-                info: {
-                    "日期": "4月6-8日 Day3-5",
-                    "活动": "古城漫游、束河、白沙",
-                    "车程": "180km / 2.5h",
-                    "住宿": "观景客栈 ¥250/晚",
-                    "餐饮": "阿妈腊排骨、云雪丽餐厅",
-                    "门票": "木府 ¥40"
-                }
+                lat: 26.87, lng: 100.23,
+                day: "3-5", icon: "🏯", color: "#9b59b6",
+                info: {"日期": "4月6-8日", "活动": "古城漫游、束河、白沙", "住宿": "观景客栈"}
+            },
+            {
+                name: "鹤庆",
+                lat: 26.54, lng: 100.25,
+                day: 4, icon: "🏞️", color: "#9b59b6",
+                info: {"日期": "Day4", "活动": "丽江→雪山途中", "特点": "高原草甸"}
             },
             {
                 name: "玉龙雪山",
-                lat: 27.10,
-                lng: 100.17,
-                day: 4,
-                icon: "⛰️",
-                color: "#3498db",
-                info: {
-                    "日期": "4月7日 Day4",
-                    "活动": "冰川公园登顶4680m",
-                    "门票": "进山¥100 + 大索道¥140",
-                    "耗时": "约6小时",
-                    "必备": "氧气罐 ¥30、羽绒服",
-                    "注意": "提前7天小程序抢票！"
-                }
+                lat: 27.10, lng: 100.17,
+                day: 4, icon: "⛰️", color: "#3498db",
+                info: {"日期": "4月7日 Day4", "活动": "冰川公园登顶4680m", "门票": "¥100+¥140", "注意": "提前抢票！"}
             },
             {
                 name: "蓝月谷",
-                lat: 27.05,
-                lng: 100.22,
-                day: 4,
-                icon: "💧",
-                color: "#3498db",
-                info: {
-                    "日期": "4月7日 Day4",
-                    "活动": "小九寨蓝月谷",
-                    "门票": "景区车 ¥50",
-                    "风景": "碧蓝湖水、雪山倒影",
-                    "建议": "下午顺光拍照最美"
-                }
+                lat: 27.05, lng: 100.22,
+                day: 4, icon: "💧", color: "#3498db",
+                info: {"日期": "4月7日 Day4", "风景": "小九寨", "门票": "¥50"}
             },
             {
                 name: "束河古镇",
-                lat: 26.92,
-                lng: 100.15,
-                day: 5,
-                icon: "🏘️",
-                color: "#9b59b6",
-                info: {
-                    "日期": "4月8日 Day5",
-                    "活动": "束河古镇漫游",
-                    "特点": "比大研安静，纳西原生态",
-                    "打卡": "四方街、九鼎龙潭",
-                    "美食": "束河咖啡、纳西菜"
-                }
+                lat: 26.92, lng: 100.15,
+                day: 5, icon: "🏘️", color: "#9b59b6",
+                info: {"日期": "4月8日 Day5", "特点": "比大研安静", "打卡": "四方街、九鼎龙潭"}
             },
             {
                 name: "白沙古镇",
-                lat: 26.98,
-                lng: 100.10,
-                day: 5,
-                icon: "🏔️",
-                color: "#9b59b6",
-                info: {
-                    "日期": "4月8日 Day5",
-                    "活动": "雪山脚下古镇",
-                    "特色": "白沙壁画、纳西文化",
-                    "打卡": "雪山观景台"
-                }
+                lat: 26.98, lng: 100.10,
+                day: 5, icon: "🏔️", color: "#9b59b6",
+                info: {"日期": "4月8日 Day5", "特色": "雪山脚下", "打卡": "白沙壁画"}
+            },
+            {
+                name: "剑川",
+                lat: 25.82, lng: 99.92,
+                day: 6, icon: "🏞️", color: "#e74c3c",
+                info: {"日期": "Day6", "活动": "返程途中"}
             },
             {
                 name: "昆明长水机场",
-                lat: 25.04,
-                lng: 102.71,
-                day: 6,
-                icon: "🛬",
-                color: "#3fb950",
-                info: {
-                    "日期": "4月9日 Day6",
-                    "活动": "丽江→昆明返程",
-                    "车程": "500km / 6h",
-                    "餐饮": "篆新农贸市场",
-                    "还车": "机场店满油还车"
-                }
+                lat: 25.04, lng: 102.71,
+                day: 6, icon: "🛬", color: "#e74c3c",
+                info: {"日期": "4月9日 Day6", "活动": "还车、返程"}
             }
         ];
-        
-        // 路线点
-        var routePoints = [
-            [25.04, 102.71],   // 昆明
-            [25.93, 100.25],  // 双廊
-            [26.87, 100.23],  // 丽江
-            [27.10, 100.17],  // 雪山
-            [26.87, 100.23],  // 丽江
-            [25.04, 102.71]   // 昆明
-        ];
-        
-        // 画路线
-        L.polyline(routePoints, {
-            color: '#3fb950',
-            weight: 3,
-            dashArray: '10, 10',
-            opacity: 0.7
-        }).addTo(map);
         
         // 添加标记
         locations.forEach(function(loc) {
             var marker = L.marker([loc.lat, loc.lng], {
                 icon: L.divIcon({
                     className: '',
-                    html: '<div style="background:' + loc.color + ';width:24px;height:24px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:12px;">' + loc.icon + '</div>',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    html: '<div style="background:' + loc.color + ';width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;">' + loc.icon + '</div>',
+                    iconSize: [20, 20], iconAnchor: [10, 10]
                 })
             }).addTo(map);
             
-            // 绑定弹出
-            var popupContent = '<div style="color:#333;"><strong>' + loc.icon + ' ' + loc.name + '</strong><br><span style="font-size:12px;">Day ' + loc.day + '</span><br><a href="#" onclick="showInfo(' + loc.lat + ',' + loc.lng + ')" style="color:#238636;font-size:12px;">查看详情 →</a></div>';
-            marker.bindPopup(popupContent, {className: 'custom-popup'});
+            marker.bindPopup('<div style="color:#333;"><strong>' + loc.icon + ' ' + loc.name + '</strong><br><span style="font-size:11px;">Day ' + loc.day + '</span><br><a href="#" onclick="showInfo(' + loc.lat + ',' + loc.lng + ')" style="color:#238636;font-size:11px;">查看详情 →</a></div>');
         });
         
-        // 地图适应
-        map.fitBounds(routePoints, {padding: [30, 30]});
+        // 路线点
+        var allPoints = routes.kunmingDali.concat(routes.daliLijiang, routes.lijiangKunming);
+        map.fitBounds(allPoints, {padding: [30, 30]});
         
-        // 显示详情
         function showInfo(lat, lng) {
             var loc = locations.find(function(l) {
                 return l.lat === lat && l.lng === lng;
@@ -420,8 +367,6 @@
                 }
                 document.getElementById('infoContent').innerHTML = content;
                 document.getElementById('infoBox').classList.add('active');
-                
-                // 关闭 popup
                 map.closePopup();
             }
         }
@@ -430,10 +375,7 @@
             document.getElementById('infoBox').classList.remove('active');
         }
         
-        // 点击地图关闭详情
-        map.on('click', function() {
-            closeInfo();
-        });
+        map.on('click', function() { closeInfo(); });
     </script>
 </body>
 </html>
